@@ -1,0 +1,4 @@
+total rules = 43
+chunking method = one rule per chunk
+repeated junk phrases to remove
+section headings observed

@@ -12,7 +12,7 @@ A retrieval-augmented chatbot that answers questions about the DIU (Daffodil Int
 - **Vector index** – I built `scripts/build_index.py` to embed each rule chunk using `all-MiniLM-L6-v2` (SentenceTransformers) and store the embeddings in a persistent ChromaDB collection under `data/vectordb/`.
 - **Retrieval utilities** – I wrote `utils/retrieval.py` to handle both exact rule-number lookups and semantic similarity search against the vector store.
 - **Answer generation** – I implemented `utils/answering.py` to format retrieved rules into readable answers and apply a confidence threshold so the bot falls back gracefully when no relevant rule is found.
-- **Streamlit web app** – I developed `app.py` as a user-facing chat interface (using Streamlit) that combines a FAISS vector store with a HuggingFace `flan-t5-base` LLM through a LangChain `RetrievalQA` chain.
+- **Streamlit web app** – I developed `app.py` as a user-facing chat interface (using Streamlit) that builds its own FAISS in-memory vector store directly from the source PDF at startup and pairs it with a HuggingFace `flan-t5-base` LLM through a LangChain `RetrievalQA` chain. This is separate from the ChromaDB-backed scripts pipeline described above.
 - **Console chatbot** – I also made `scripts/console_chatbot.py` for quick terminal-based testing of the retrieval pipeline without launching the full web app.
 
 ### How I Structured the Data Pipeline

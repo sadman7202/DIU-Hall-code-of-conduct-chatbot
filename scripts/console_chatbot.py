@@ -1,3 +1,9 @@
+import os
+
+# Disable Chroma/PostHog telemetry BEFORE importing anything that might import chromadb
+os.environ["ANONYMIZED_TELEMETRY"] = "False"
+os.environ["CHROMA_TELEMETRY"] = "False"
+
 import sys
 from pathlib import Path
 

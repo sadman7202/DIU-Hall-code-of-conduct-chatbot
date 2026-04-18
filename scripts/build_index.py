@@ -1,3 +1,5 @@
+import os
+os.environ["ANONYMIZED_TELEMETRY"] = "False"
 import json
 import os
 from pathlib import Path
@@ -5,9 +7,13 @@ from pathlib import Path
 import chromadb
 from sentence_transformers import SentenceTransformer
 
-# ===== PATHS =====
-CHUNKS_PATH = Path(r"D:\Projects\hostel chatbot\data\processed\chunks_updated.json")
-DB_DIR = Path(r"D:\Projects\hostel chatbot\data\vectordb")
+# --------------------------------------------------------------------------------------
+# Project-relative paths (portable)
+# --------------------------------------------------------------------------------------
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+CHUNKS_PATH = PROJECT_ROOT / "data" / "processed" / "chunks_updated.json"
+DB_DIR = PROJECT_ROOT / "data" / "vectordb"
 COLLECTION_NAME = "hostel_rules"
 
 # Lightweight embedding model
@@ -16,7 +22,10 @@ MODEL_NAME = "all-MiniLM-L6-v2"
 
 def load_chunks(path: Path):
     if not path.exists():
-        raise FileNotFoundError(f"Chunk file not found: {path}")
+        raise FileNotFoundError(
+            f"Chunk file not found: {path}\n"
+            "Make sure you generated it first (scripts/chunk_rules.py)."
+        )
 
     with open(path, "r", encoding="utf-8") as f:
         chunks = json.load(f)
@@ -45,11 +54,13 @@ def make_documents(chunks):
 
         ids.append(rule_id)
         documents.append(doc_text)
-        metadatas.append({
-            "rule_number": int(rule_number),
-            "section": str(section),
-            "page": int(page)
-        })
+        metadatas.append(
+            {
+                "rule_number": int(rule_number),
+                "section": str(section),
+                "page": int(page),
+            }
+        )
 
     return ids, documents, metadatas
 
@@ -69,7 +80,7 @@ def main():
     embeddings = model.encode(
         documents,
         show_progress_bar=True,
-        normalize_embeddings=True
+        normalize_embeddings=True,
     ).tolist()
 
     print(f"Creating vector DB folder: {DB_DIR}")
@@ -91,7 +102,7 @@ def main():
         ids=ids,
         documents=documents,
         metadatas=metadatas,
-        embeddings=embeddings
+        embeddings=embeddings,
     )
 
     print("\nIndex build complete.")

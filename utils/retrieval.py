@@ -1,3 +1,5 @@
+import os
+os.environ["ANONYMIZED_TELEMETRY"] = "False"
 import json
 import re
 from pathlib import Path
@@ -8,15 +10,43 @@ from transformers import logging as hf_logging
 
 hf_logging.set_verbosity_error()
 
-DB_DIR = Path(r"D:\Projects\hostel chatbot\data\vectordb")
+
+# --------------------------------------------------------------------------------------
+# Project-relative paths (portable)
+# --------------------------------------------------------------------------------------
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+DB_DIR = PROJECT_ROOT / "data" / "vectordb"
+CHUNKS_PATH = PROJECT_ROOT / "data" / "processed" / "chunks_updated.json"
+
 COLLECTION_NAME = "hostel_rules"
 MODEL_NAME = "all-MiniLM-L6-v2"
-CHUNKS_PATH = Path(r"D:\Projects\hostel chatbot\data\processed\chunks_updated.json")
+
+# Helpful validation messages (so errors are clear)
+if not CHUNKS_PATH.exists():
+    raise FileNotFoundError(
+        f"Chunks file not found: {CHUNKS_PATH}\n"
+        "Generate it first (scripts/chunk_rules.py) before indexing."
+    )
+
+if not DB_DIR.exists():
+    raise FileNotFoundError(
+        f"Vector DB folder not found: {DB_DIR}\n"
+        "Build it first by running: python scripts/build_index.py"
+    )
 
 # Load once
 model = SentenceTransformer(MODEL_NAME)
 client = chromadb.PersistentClient(path=str(DB_DIR))
-collection = client.get_collection(COLLECTION_NAME)
+
+try:
+    collection = client.get_collection(COLLECTION_NAME)
+except Exception as exc:
+    raise RuntimeError(
+        f"Chroma collection '{COLLECTION_NAME}' not found in {DB_DIR}.\n"
+        "Run: python scripts/build_index.py\n"
+        f"Original error: {exc}"
+    ) from exc
 
 with open(CHUNKS_PATH, "r", encoding="utf-8") as f:
     CHUNKS = json.load(f)
@@ -42,14 +72,11 @@ def get_rule_by_number(rule_number: int):
 
 
 def semantic_search(query: str, top_k: int = 3):
-    query_embedding = model.encode(
-        [query],
-        normalize_embeddings=True
-    ).tolist()
+    query_embedding = model.encode([query], normalize_embeddings=True).tolist()
 
     results = collection.query(
         query_embeddings=query_embedding,
-        n_results=top_k
+        n_results=top_k,
     )
 
     ids = results.get("ids", [[]])[0]
@@ -62,15 +89,17 @@ def semantic_search(query: str, top_k: int = 3):
         rule_number = int(meta.get("rule_number"))
         chunk = RULE_MAP.get(rule_number, {})
 
-        formatted.append({
-            "id": doc_id,
-            "rule_number": rule_number,
-            "section": meta.get("section"),
-            "page": int(meta.get("page")),
-            "document": doc,
-            "distance": float(dist),
-            "text": chunk.get("text", "")
-        })
+        formatted.append(
+            {
+                "id": doc_id,
+                "rule_number": rule_number,
+                "section": meta.get("section"),
+                "page": int(meta.get("page")),
+                "document": doc,
+                "distance": float(dist),
+                "text": chunk.get("text", ""),
+            }
+        )
 
     return formatted
 
@@ -87,23 +116,25 @@ def search_rules(query: str, top_k: int = 3):
         if exact:
             return {
                 "mode": "exact_rule",
-                "results": [{
-                    "id": exact["id"],
-                    "rule_number": exact["rule_number"],
-                    "section": exact["section"],
-                    "page": exact["page"],
-                    "document": (
-                        f"Section: {exact['section']}\n"
-                        f"Rule Number: {exact['rule_number']}\n"
-                        f"Page: {exact['page']}\n"
-                        f"Rule Text: {exact['text']}"
-                    ),
-                    "distance": 0.0,
-                    "text": exact["text"]
-                }]
+                "results": [
+                    {
+                        "id": exact["id"],
+                        "rule_number": exact["rule_number"],
+                        "section": exact["section"],
+                        "page": exact["page"],
+                        "document": (
+                            f"Section: {exact['section']}\n"
+                            f"Rule Number: {exact['rule_number']}\n"
+                            f"Page: {exact['page']}\n"
+                            f"Rule Text: {exact['text']}"
+                        ),
+                        "distance": 0.0,
+                        "text": exact["text"],
+                    }
+                ],
             }
 
     return {
         "mode": "semantic",
-        "results": semantic_search(query, top_k=top_k)
+        "results": semantic_search(query, top_k=top_k),
     }

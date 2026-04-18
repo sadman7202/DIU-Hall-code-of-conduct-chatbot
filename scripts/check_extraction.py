@@ -1,6 +1,9 @@
 import json
+from pathlib import Path
 
-with open("data/processed/extracted_pages.json", "r", encoding="utf-8") as f:
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+with open(PROJECT_ROOT / "data" / "processed" / "extracted_pages.json", "r", encoding="utf-8") as f:
     pages = json.load(f)
 
 for p in [3, 12, 13, 22, 26]:

@@ -1,9 +1,11 @@
 import json
-import os
 import re
+from pathlib import Path
 
-INPUT_PATH = "data/processed/cleaned_pages.json"
-OUTPUT_PATH = "data/processed/chunks_updated.json"
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+INPUT_PATH = PROJECT_ROOT / "data" / "processed" / "cleaned_pages.json"
+OUTPUT_PATH = PROJECT_ROOT / "data" / "processed" / "chunks_updated.json"
 
 KNOWN_SECTIONS = [
     "HALL ADMISSION, SEAT ALLOCATION & RENEWAL POLICY",
@@ -77,7 +79,7 @@ def extract_rules(text: str):
 def main():
     print("Starting chunk_rules.py...")
 
-    if not os.path.exists(INPUT_PATH):
+    if not INPUT_PATH.exists():
         print(f"ERROR: File not found -> {INPUT_PATH}")
         return
 

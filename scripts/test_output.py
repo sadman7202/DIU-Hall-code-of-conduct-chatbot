@@ -1,9 +1,11 @@
 import json
-import os
+from pathlib import Path
 
-CHUNKS_PATH = "data/processed/chunks_updated.json"
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
-if not os.path.exists(CHUNKS_PATH):
+CHUNKS_PATH = PROJECT_ROOT / "data" / "processed" / "chunks_updated.json"
+
+if not CHUNKS_PATH.exists():
     print(f"ERROR: File not found -> {CHUNKS_PATH}")
     raise SystemExit
 

@@ -1,10 +1,12 @@
 import json
-import os
 import re
+from pathlib import Path
 
-INPUT_PATH = "data/processed/extracted_pages.json"
-OUTPUT_JSON = "data/processed/cleaned_pages.json"
-OUTPUT_TXT = "data/processed/cleaned_text.txt"
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+INPUT_PATH = PROJECT_ROOT / "data" / "processed" / "extracted_pages.json"
+OUTPUT_JSON = PROJECT_ROOT / "data" / "processed" / "cleaned_pages.json"
+OUTPUT_TXT = PROJECT_ROOT / "data" / "processed" / "cleaned_text.txt"
 
 # Skip intro, summary, and thank-you pages
 SKIP_PAGES = {1, 2, 3, 4, 29}
@@ -53,11 +55,11 @@ def clean_text(text: str) -> str:
     return text.strip()
 
 def main():
-    if not os.path.exists(INPUT_PATH):
+    if not INPUT_PATH.exists():
         print(f"ERROR: File not found -> {INPUT_PATH}")
         return
 
-    os.makedirs("data/processed", exist_ok=True)
+    (PROJECT_ROOT / "data" / "processed").mkdir(parents=True, exist_ok=True)
 
     with open(INPUT_PATH, "r", encoding="utf-8") as f:
         pages = json.load(f)

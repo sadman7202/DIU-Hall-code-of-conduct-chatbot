@@ -1,9 +1,11 @@
 import fitz  # PyMuPDF
 import json
-import os
+from pathlib import Path
 
-PDF_PATH = "data/raw/hostel_code.pdf"
-OUTPUT_PATH = "data/processed/extracted_pages.json"
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+PDF_PATH = PROJECT_ROOT / "data" / "raw" / "hostel_code.pdf"
+OUTPUT_PATH = PROJECT_ROOT / "data" / "processed" / "extracted_pages.json"
 
 def extract_pdf_text(pdf_path):
     doc = fitz.open(pdf_path)
@@ -19,7 +21,7 @@ def extract_pdf_text(pdf_path):
     return pages
 
 def main():
-    os.makedirs("data/processed", exist_ok=True)
+    (PROJECT_ROOT / "data" / "processed").mkdir(parents=True, exist_ok=True)
 
     extracted_pages = extract_pdf_text(PDF_PATH)
 

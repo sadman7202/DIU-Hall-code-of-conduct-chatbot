@@ -1,8 +1,9 @@
-import os
-os.environ["ANONYMIZED_TELEMETRY"] = "False"
 import json
 import os
 from pathlib import Path
+
+os.environ["ANONYMIZED_TELEMETRY"] = "False"
+os.environ["CHROMA_TELEMETRY"] = "False"
 
 import chromadb
 from sentence_transformers import SentenceTransformer
